@@ -5,12 +5,13 @@ using System.Collections.ObjectModel;
 using System.Net.Http;
 using VDIAZ.Semana6.Clase.Model;
 using Xamarin.Forms;
+using VDIAZ.Semana6.Clase.Utils;
 
 namespace VDIAZ.Semana6.Clase
 {
     public partial class MainPage : ContentPage
     {
-        private const string url = "http://172.20.10.7:8080/api/users";
+        private string url = Constant.Services.SERVICE_USERS;
         private readonly HttpClient client = new HttpClient();
         private ObservableCollection<User> data;
 
@@ -27,10 +28,14 @@ namespace VDIAZ.Semana6.Clase
             lsUSers.ItemsSource = data;
         }
 
-        private void ViewCell_Tapped(object sender, EventArgs e)
+        private async void ViewCell_Tapped(object sender, EventArgs e)
         {
             User user = (User) lsUSers.SelectedItem;
-            DisplayAlert("tapped", "Selected: " + user.Name, "Ok");
+            if (user != null)
+            {
+                await Navigation.PushAsync(new Users(user));
+            }
+            //DisplayAlert("tapped", "Selected: " + user.Name, "Ok");
         }
 
         private async void btnNew_Clicked(object sender, EventArgs e)
