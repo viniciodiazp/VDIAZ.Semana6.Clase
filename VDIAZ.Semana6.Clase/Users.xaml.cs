@@ -1,61 +1,50 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.Net.Http;
+﻿using Newtonsoft.Json;
+using System;
 using VDIAZ.Semana6.Clase.Model;
+using VDIAZ.Semana6.Clase.Utils;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
-using System.Net;
 
 namespace VDIAZ.Semana6.Clase
 {
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class Users : ContentPage
     {
-        private const string url = "http://172.20.10.7:8080/api/users";
-        private readonly WebClient client = new WebClient();
-        private ObservableCollection<User> data;
+        private string url = Constant.Services.SERVICE_USERS;
+        private RestExecutor restExecutor = new RestExecutor();
 
-        private Users user;
-        bool isNew = false;
-        public Users(Users user)
+        private User user;
+        private bool isNew = false;
+        public Users(User user)
         {
+            InitializeComponent();
             if (user == null)
             {
                 isNew = true;
             } else
             {
                 this.user = user;
+                FillData(user);
             }
-            InitializeComponent();
-
         }
 
         private async void btnSave_Clicked(object sender, EventArgs e)
         {
             try
             {
-                User user = new User();
-                user.Id = Convert.ToInt32(txtId.Text);
-                user.Name = txtName.Text;
-                user.BirthDate = txtBirthDate.Text;
-                user.Gender = txtGender.Text;
-                user.Height = Convert.ToDouble(txtHeight.Text);
-                user.Weight = Convert.ToDouble(txtWeight.Text);
-                user.Email = txtEmail.Text;
+                User user = BuildUser();
 
-                var payload = new System.Collections.Specialized.NameValueCollection();
+                string method = "POST";
 
-                payload.Add("id", txtId.Text);
-                payload.Add("email", txtEmail.Text);
-                payload.Add("name", txtName.Text);
-                payload.Add("gender", txtGender.Text);
-                payload.Add("birthDate", txtBirthDate.Text);
-                payload.Add("height", txtHeight.Text);
-                payload.Add("weight", txtWeight.Text);
+                if (!isNew)
+                {
+                    method = "PUT";
+                    url = url + "/" + user.Id.ToString();
+                }
 
-                client.Headers.Add("Content-Type", "application/json");
-                
-                client.UploadValues(url, "POST", payload);
+                string response = restExecutor.Execute(url,
+                    method, JsonConvert.SerializeObject(user));
+    
                 DisplayAlert("App", "Guardado con éxito", "Aceptar");
             } catch (Exception exception){
                 Console.Write(exception);
@@ -65,12 +54,54 @@ namespace VDIAZ.Semana6.Clase
 
         private void btnDelete_Clicked(object sender, EventArgs e)
         {
+            try
+            {
+                User user = BuildUser();
 
+                if (!isNew)
+                {
+                    url = url + "/" + user.Id.ToString();
+                    string response = restExecutor.Execute(url,
+                    "DELETE");
+                }
+
+                DisplayAlert("App", "Registro eliminado", "Aceptar");
+            }
+            catch (Exception exception)
+            {
+                Console.Write(exception);
+                DisplayAlert("App", "Error", "Aceptar");
+            }
         }
 
         private void btnBack_Clicked(object sender, EventArgs e)
         {
-
+            Navigation.PopAsync();
         }
+
+        private User BuildUser()
+        {
+            User user = new User();
+            user.Id = Convert.ToInt32(txtId.Text);
+            user.Name = txtName.Text;
+            user.BirthDate = txtBirthDate.Text;
+            user.Gender = txtGender.Text;
+            user.Height = Convert.ToDouble(txtHeight.Text);
+            user.Weight = Convert.ToDouble(txtWeight.Text);
+            user.Email = txtEmail.Text;
+            return user;
+        }
+
+        private void FillData(User user)
+        {
+            txtId.Text = user.Id.ToString();
+            txtName.Text = user.Name;
+            txtBirthDate.Text = user.BirthDate;
+            txtGender.Text = user.Gender;
+            txtHeight.Text = user.Height.ToString();
+            txtWeight.Text = user.Weight.ToString();
+            txtEmail.Text = user.Email;
+        }
+
     }
 }
